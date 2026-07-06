@@ -55,12 +55,21 @@ public class Main {
         IO.println("                                  ");
 
         var transactionIngestor = new TransactionIngestor();
-        List<Transaction> transactions = transactionIngestor.read("data/transactions.csv");
+//        List<Transaction> transactions = transactionIngestor.read("zenon-fraud-detector/data/transactions.csv");
+//
+//        for (Transaction transaction : transactions) {
+//            IO.println(transaction);
+//        }
 
-        for (Transaction transaction : transactions) {
-            IO.println(transaction);
-        }
+//        IO.println(transactions.size());
 
-        IO.println(transactions.size());
+        IO.println("----------------------------------");
+        IO.println("                                  ");
+
+        List<Transaction> transactionsBadData = transactionIngestor.read("zenon-fraud-detector/data/paysim_with_bad_data.csv");
+
+        IO.println(transactionsBadData.size());
+
+        transactionsBadData.forEach(IO::println);
     }
 }
