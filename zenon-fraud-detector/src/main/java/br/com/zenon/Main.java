@@ -58,28 +58,26 @@ public class Main {
         var transactionIngestor = new TransactionIngestor();
         List<Transaction> transactions = transactionIngestor.read("zenon-fraud-detector/data/transactions.csv");
 
-        var fraudAnalyzer = new FraudAnalyzer();
 
+        var fraudAnalyzer = new FraudAnalyzer(transactions);
 
+        long countFrauds = fraudAnalyzer.countFrauds();
+        IO.println("1. Total de Fraudes: " + countFrauds);
 
-//      transactions.forEach(IO::println);
-        int qtdTransactionsFraud = fraudAnalyzer.isFraudOnArchive(transactions);
-        IO.println("1. Total de Fraudes: " + qtdTransactionsFraud);
-
-        List<Transaction> top3FraudulentTransactions = fraudAnalyzer.valueMaxFraud(transactions);
+        List<BigDecimal> highestFraudAmounts = fraudAnalyzer.findHighestValueFraudsAmounts(3);
         IO.println("2. Top 3 Fraudes de Maior Valor: ");
-        top3FraudulentTransactions.forEach(transaction -> IO.println(transaction.amount().toPlainString()));
+        highestFraudAmounts.forEach(amount -> IO.println("- %.2f".formatted(amount)));
 
         IO.println("3. Clientes Suspeitos: ");
-        List<String> suspectClients = fraudAnalyzer.validateSuspectClient(transactions);
+        List<String> suspectClients = fraudAnalyzer.findTopSuspiciousClients(5);
         suspectClients.forEach(IO::println);
 
-        var totalPrejuizo = fraudAnalyzer.calculaPrejuizoTotal(transactions);
-        IO.println("4. Prejuízo Total: " + totalPrejuizo.toPlainString());
+        var totalPrejuizo = fraudAnalyzer.calculateTotalFraudLoss();
+        IO.println("4. Prejuízo Total: " + totalPrejuizo);
 
-        var listaFraudesTipo = fraudAnalyzer.countFraudType(transactions);
+        var fraudCountByType = fraudAnalyzer.countFraudsByType();
         IO.println("5. Fraudes por Tipo: ");
-        listaFraudesTipo.forEach((type, count) -> IO.println("- " + type + ": " + count));
+        fraudCountByType.forEach((type, count) -> IO.println("- %s: %d".formatted(type, count)));
 
 //        IO.println("----------------------------------");
 //        IO.println("                                  ");

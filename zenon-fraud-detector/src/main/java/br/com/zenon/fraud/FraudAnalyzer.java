@@ -1,47 +1,66 @@
 package br.com.zenon.fraud;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.math.BigDecimal;
-import java.util.HashMap;
+
 import java.util.List;
+import java.util.Objects;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class FraudAnalyzer {
 
-    public int isFraudOnArchive(List<Transaction> transactions) {
-        return transactions.stream()
-                .filter(Transaction::isFraud)
-                .toList()
-                .size();
+    private final List<Transaction> transactions;
+
+    public FraudAnalyzer(List<Transaction> transactions) {
+        Objects.requireNonNull(transactions);
+        this.transactions = transactions;
     }
 
-    public List<Transaction> valueMaxFraud(List<Transaction> transactions) {
-        return transactions.stream()
-                .filter(Transaction::isFraud)
-                .sorted((t1, t2) -> t2.amount().compareTo(t1.amount()))
-                .limit(3)
+    public long countFrauds() {
+        return fraudStream()
+                .count();
+    }
+
+    public List<BigDecimal> findHighestValueFraudsAmounts(int limit) {
+        return highestValueFraudStream()
+                .map(Transaction::amount)
+                .limit(limit)
                 .toList();
     }
 
-    public List<String> validateSuspectClient(List<Transaction> transactions) {
-        return transactions.stream()
-                .filter(Transaction::isFraud)
+    public List<String> findTopSuspiciousClients(int limit) {
+        return highestValueFraudStream()
                 .map(Transaction::customerOrig)
                 .map(TransactionCustomer::name)
+                .limit(limit)
                 .distinct()
                 .toList();
     }
 
-    public BigDecimal calculaPrejuizoTotal(List<Transaction> transactions) {
-        return transactions.stream()
-                .filter(Transaction::isFraud)
+    public BigDecimal calculateTotalFraudLoss() {
+        return fraudStream()
                 .map(Transaction::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public HashMap<TransactionType, Integer> countFraudType(List<Transaction> transactions) {
+    public Map<TransactionType, Long> countFraudsByType() {
+        return fraudStream()
+                .collect(Collectors.groupingBy(Transaction::type, Collectors.counting()));
+    }
+
+    private Stream<Transaction> fraudStream() {
         return transactions.stream()
-                .filter(Transaction::isFraud)
-                .map(Transaction::type)
-                .collect(HashMap::new, (map, type) -> map.put(type, map.getOrDefault(type, 0) + 1), HashMap::putAll);
+                .filter(Transaction::isFraud);
+    }
+
+    private Stream<Transaction> highestValueFraudStream() {
+        return fraudStream()
+                .sorted(Comparator.comparing(Transaction::amount).reversed());
     }
 
 }
