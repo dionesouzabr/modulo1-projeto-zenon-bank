@@ -1,13 +1,11 @@
 package br.com.zenon;
 
 
-import br.com.zenon.fraud.FraudAnalyzer;
-import br.com.zenon.fraud.Transaction;
-import br.com.zenon.fraud.TransactionCustomer;
-import br.com.zenon.fraud.TransactionType;
+import br.com.zenon.fraud.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public class Main {
 
@@ -59,25 +57,25 @@ public class Main {
         List<Transaction> transactions = transactionIngestor.read("zenon-fraud-detector/data/transactions.csv");
 
 
-        var fraudAnalyzer = new FraudAnalyzer(transactions);
-
-        long countFrauds = fraudAnalyzer.countFrauds();
-        IO.println("1. Total de Fraudes: " + countFrauds);
-
-        List<BigDecimal> highestFraudAmounts = fraudAnalyzer.findHighestValueFraudsAmounts(3);
-        IO.println("2. Top 3 Fraudes de Maior Valor: ");
-        highestFraudAmounts.forEach(amount -> IO.println("- %.2f".formatted(amount)));
-
-        IO.println("3. Clientes Suspeitos: ");
-        List<String> suspectClients = fraudAnalyzer.findTopSuspiciousClients(5);
-        suspectClients.forEach(IO::println);
-
-        var totalPrejuizo = fraudAnalyzer.calculateTotalFraudLoss();
-        IO.println("4. Prejuízo Total: " + totalPrejuizo);
-
-        var fraudCountByType = fraudAnalyzer.countFraudsByType();
-        IO.println("5. Fraudes por Tipo: ");
-        fraudCountByType.forEach((type, count) -> IO.println("- %s: %d".formatted(type, count)));
+//        var fraudAnalyzer = new FraudAnalyzer(transactions);
+//
+//        long countFrauds = fraudAnalyzer.countFrauds();
+//        IO.println("1. Total de Fraudes: " + countFrauds);
+//
+//        List<BigDecimal> highestFraudAmounts = fraudAnalyzer.findHighestValueFraudsAmounts(3);
+//        IO.println("2. Top 3 Fraudes de Maior Valor: ");
+//        highestFraudAmounts.forEach(amount -> IO.println("- %.2f".formatted(amount)));
+//
+//        IO.println("3. Clientes Suspeitos: ");
+//        List<String> suspectClients = fraudAnalyzer.findTopSuspiciousClients(5);
+//        suspectClients.forEach(IO::println);
+//
+//        var totalPrejuizo = fraudAnalyzer.calculateTotalFraudLoss();
+//        IO.println("4. Prejuízo Total: " + totalPrejuizo);
+//
+//        var fraudCountByType = fraudAnalyzer.countFraudsByType();
+//        IO.println("5. Fraudes por Tipo: ");
+//        fraudCountByType.forEach((type, count) -> IO.println("- %s: %d".formatted(type, count)));
 
 //        IO.println("----------------------------------");
 //        IO.println("                                  ");
@@ -87,5 +85,37 @@ public class Main {
 //        IO.println(transactionsBadData.size());
 //
 //        transactionsBadData.forEach(IO::println);
+
+        IO.println("----------------------------------");
+        IO.println("                                  ");
+
+        TransactionRepository transactionRepository;
+
+        transactionRepository = new TransactionListRepository(transactions);
+
+        String notFoundOriginName = "C12345";
+
+        transactionRepository.findByOriginName(notFoundOriginName)
+                        .ifPresentOrElse(IO::println, () -> IO.println("Transação não encontrada para o cliente " + notFoundOriginName));
+
+
+        String existingOriginName = "C1868032458";
+
+        long startTimeList = System.nanoTime();
+        transactionRepository.findByOriginName(existingOriginName)
+                .ifPresentOrElse(IO::println, () -> IO.println("Transação não encontrada para o cliente " + existingOriginName));
+        long endTimeList = System.nanoTime();
+        IO.println("Tempo de busca - List (ms): " + (endTimeList - startTimeList) / 1_000_000.0);
+
+        transactionRepository = new TransactionMapRepository(transactions);
+
+
+        startTimeList = System.nanoTime();
+        transactionRepository.findByOriginName(existingOriginName)
+                .ifPresentOrElse(IO::println, () -> IO.println("Transação não encontrada para o cliente " + existingOriginName));
+        endTimeList = System.nanoTime();
+        IO.println("Tempo de busca - Map (ms): " + (endTimeList - startTimeList) / 1_000_000.0);
+
+
     }
 }
